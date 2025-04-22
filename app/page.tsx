@@ -110,8 +110,8 @@ export default function Home() {
               key={player.id}
               className={`border p-2 rounded ${
                 player.gender === "male"
-                  ? "bg-black border-blue-400"
-                  : "bg-black border-pink-400"
+                  ? "bg-white border-blue-400"
+                  : "bg-white border-pink-400"
               }`}
             >
               <span
