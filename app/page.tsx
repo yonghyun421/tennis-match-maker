@@ -17,6 +17,7 @@ export default function Home() {
     name: "",
     level: 3,
     gender: "male",
+    group: "terizz",
   });
 
   const handleAddPlayer = () => {
@@ -25,19 +26,42 @@ export default function Home() {
         ...players,
         { ...newPlayer, id: `player-${players.length + 1}`, matchesPlayed: 0 },
       ]);
-      setNewPlayer({ name: "", level: 3, gender: "male" });
+      setNewPlayer({ name: "", level: 3, gender: "male", group: "terizz" });
       setError("");
     }
   };
 
   const handleGenerateMatches = () => {
+    const initialPlayers = players.map((p) => ({ ...p, matchesPlayed: 0 }));
     try {
       const generatedRounds = generateMatches(
-        players,
+        initialPlayers,
         matchType,
         matchType,
         numberOfCourts,
         numberOfRounds
+      );
+      const finalPlayerStateMap = new Map<string, number>();
+      generatedRounds.forEach((round) => {
+        round.matches.forEach((match) => {
+          [
+            match.team1.player1,
+            match.team1.player2,
+            match.team2.player1,
+            match.team2.player2,
+          ].forEach((p) => {
+            finalPlayerStateMap.set(
+              p.id,
+              (finalPlayerStateMap.get(p.id) || 0) + 1
+            );
+          });
+        });
+      });
+      setPlayers((prevPlayers) =>
+        prevPlayers.map((p) => ({
+          ...p,
+          matchesPlayed: finalPlayerStateMap.get(p.id) || 0,
+        }))
       );
       setRounds(generatedRounds);
       setError("");
@@ -62,7 +86,7 @@ export default function Home() {
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">
             플레이어 등록
           </h2>
-          <div className="flex flex-wrap gap-3 mb-4">
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
             <input
               type="text"
               placeholder="이름"
@@ -98,6 +122,43 @@ export default function Home() {
               <option value="male">남성</option>
               <option value="female">여성</option>
             </select>
+
+            <div className="flex items-center gap-4 border border-gray-200 p-2.5 rounded-lg">
+              <span className="text-gray-600 text-sm">그룹:</span>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="group"
+                  value="terizz"
+                  checked={newPlayer.group === "terizz"}
+                  onChange={(e) =>
+                    setNewPlayer({
+                      ...newPlayer,
+                      group: e.target.value as "terizz" | "tenipang",
+                    })
+                  }
+                  className="form-radio h-4 w-4 text-blue-600"
+                />
+                <span className="ml-2 text-black">테리쯔</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="group"
+                  value="tenipang"
+                  checked={newPlayer.group === "tenipang"}
+                  onChange={(e) =>
+                    setNewPlayer({
+                      ...newPlayer,
+                      group: e.target.value as "terizz" | "tenipang",
+                    })
+                  }
+                  className="form-radio h-4 w-4 text-pink-600"
+                />
+                <span className="ml-2 text-black">테니팡</span>
+              </label>
+            </div>
+
             <button
               onClick={handleAddPlayer}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors duration-200 font-medium"
@@ -115,33 +176,41 @@ export default function Home() {
             {players.map((player) => (
               <li
                 key={player.id}
-                className={`p-3 rounded-lg border-2 transition-all hover:shadow-md ${
+                className={`p-3 rounded-lg border-2 transition-all hover:shadow-md flex items-center ${
                   player.gender === "male"
                     ? "border-blue-200 hover:border-blue-400"
                     : "border-pink-200 hover:border-pink-400"
                 }`}
               >
                 <span
-                  className={`font-medium ${
-                    player.gender === "male" ? "text-blue-700" : "text-pink-700"
+                  className={`inline-block w-3 h-3 rounded-full mr-2 flex-shrink-0 ${
+                    player.group === "terizz" ? "bg-green-500" : "bg-yellow-400"
                   }`}
-                >
-                  {player.name}
-                </span>
-                <span className="text-gray-600">
-                  {" "}
-                  (레벨 {player.level},{" "}
+                ></span>
+                <div>
                   <span
-                    className={
+                    className={`font-medium ${
                       player.gender === "male"
-                        ? "text-blue-600"
-                        : "text-pink-600"
-                    }
+                        ? "text-blue-700"
+                        : "text-pink-700"
+                    }`}
                   >
-                    {player.gender === "male" ? "남성" : "여성"}
+                    {player.name}
                   </span>
-                  )
-                </span>
+                  <span className="text-gray-600 text-sm ml-1">
+                    (레벨 {player.level},{" "}
+                    <span
+                      className={
+                        player.gender === "male"
+                          ? "text-blue-600"
+                          : "text-pink-600"
+                      }
+                    >
+                      {player.gender === "male" ? "남성" : "여성"}
+                    </span>
+                    )
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
@@ -212,24 +281,7 @@ export default function Home() {
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {players.map((player) => {
-                  // 플레이어의 총 게임 수 계산
-                  const gameCount = rounds.reduce((total, round) => {
-                    return (
-                      total +
-                      round.matches.reduce((matchTotal, match) => {
-                        if (
-                          match.team1.player1.id === player.id ||
-                          match.team1.player2.id === player.id ||
-                          match.team2.player1.id === player.id ||
-                          match.team2.player2.id === player.id
-                        ) {
-                          return matchTotal + 1;
-                        }
-                        return matchTotal;
-                      }, 0)
-                    );
-                  }, 0);
-
+                  const gameCount = player.matchesPlayed;
                   return (
                     <div
                       key={player.id}
@@ -275,8 +327,8 @@ export default function Home() {
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="font-semibold text-gray-700 mb-2">
                             팀 1
-                            <span className="text-sm text-gray-600 mt-1">
-                              - (평균 레벨: {match.team1.averageLevel})
+                            <span className="text-sm text-gray-600 font-normal ml-1">
+                              (평균 레벨: {match.team1.averageLevel.toFixed(1)})
                             </span>
                           </p>
                           <p className="text-sm text-black">
@@ -287,6 +339,13 @@ export default function Home() {
                                   : "text-pink-600"
                               }
                             >
+                              <span
+                                className={`inline-block w-2.5 h-2.5 rounded-full mr-1.5 ${
+                                  match.team1.player1.group === "terizz"
+                                    ? "bg-green-500"
+                                    : "bg-yellow-400"
+                                }`}
+                              ></span>
                               {match.team1.player1.name}
                             </span>
                             {" & "}
@@ -297,6 +356,13 @@ export default function Home() {
                                   : "text-pink-600"
                               }
                             >
+                              <span
+                                className={`inline-block w-2.5 h-2.5 rounded-full mr-1.5 ${
+                                  match.team1.player2.group === "terizz"
+                                    ? "bg-green-500"
+                                    : "bg-yellow-400"
+                                }`}
+                              ></span>
                               {match.team1.player2.name}
                             </span>
                           </p>
@@ -304,8 +370,8 @@ export default function Home() {
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="font-semibold text-gray-700 mb-2">
                             팀 2
-                            <span className="text-sm text-gray-600 mt-1">
-                              - (평균 레벨: {match.team2.averageLevel})
+                            <span className="text-sm text-gray-600 font-normal ml-1">
+                              (평균 레벨: {match.team2.averageLevel.toFixed(1)})
                             </span>
                           </p>
                           <p className="text-sm text-black">
@@ -316,6 +382,13 @@ export default function Home() {
                                   : "text-pink-600"
                               }
                             >
+                              <span
+                                className={`inline-block w-2.5 h-2.5 rounded-full mr-1.5 ${
+                                  match.team2.player1.group === "terizz"
+                                    ? "bg-green-500"
+                                    : "bg-yellow-400"
+                                }`}
+                              ></span>
                               {match.team2.player1.name}
                             </span>
                             {" & "}
@@ -326,6 +399,13 @@ export default function Home() {
                                   : "text-pink-600"
                               }
                             >
+                              <span
+                                className={`inline-block w-2.5 h-2.5 rounded-full mr-1.5 ${
+                                  match.team2.player2.group === "terizz"
+                                    ? "bg-green-500"
+                                    : "bg-yellow-400"
+                                }`}
+                              ></span>
                               {match.team2.player2.name}
                             </span>
                           </p>
@@ -351,7 +431,7 @@ export default function Home() {
                           </span>
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          전체 평균 레벨: {match.averageLevel}
+                          전체 평균 레벨: {match.averageLevel.toFixed(1)}
                         </p>
                       </div>
                     </div>
