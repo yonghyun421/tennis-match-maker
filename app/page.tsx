@@ -3,6 +3,20 @@
 import { useState } from "react";
 import { Player, MatchType, Round } from "./types";
 import { generateMatches } from "./utils/matchGenerator";
+import type { Metadata } from "next";
+
+// Add Open Graph metadata
+export const metadata: Metadata = {
+  openGraph: {
+    title: "match-maker",
+    description: "테리쯔 X 테니팡 정기전",
+    images: [
+      {
+        url: "/og-image.png",
+      },
+    ],
+  },
+};
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([]);
