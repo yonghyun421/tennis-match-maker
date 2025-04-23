@@ -111,7 +111,7 @@ export default function Home() {
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">
             등록된 플레이어
           </h2>
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <ul className="grid grid-cols-2 gap-3">
             {players.map((player) => (
               <li
                 key={player.id}
@@ -205,12 +205,64 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-6 text-gray-700">
               생성된 대진표
             </h2>
+
+            <div className="mb-8 bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-3 text-gray-600">
+                플레이어별 게임 수
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {players.map((player) => {
+                  // 플레이어의 총 게임 수 계산
+                  const gameCount = rounds.reduce((total, round) => {
+                    return (
+                      total +
+                      round.matches.reduce((matchTotal, match) => {
+                        if (
+                          match.team1.player1.id === player.id ||
+                          match.team1.player2.id === player.id ||
+                          match.team2.player1.id === player.id ||
+                          match.team2.player2.id === player.id
+                        ) {
+                          return matchTotal + 1;
+                        }
+                        return matchTotal;
+                      }, 0)
+                    );
+                  }, 0);
+
+                  return (
+                    <div
+                      key={player.id}
+                      className={`p-3 rounded-lg border ${
+                        player.gender === "male"
+                          ? "border-blue-200 bg-blue-50"
+                          : "border-pink-200 bg-pink-50"
+                      }`}
+                    >
+                      <span
+                        className={`font-medium ${
+                          player.gender === "male"
+                            ? "text-blue-700"
+                            : "text-pink-700"
+                        }`}
+                      >
+                        {player.name}
+                      </span>
+                      <div className="text-sm text-gray-600 mt-1">
+                        총 {gameCount}게임
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {rounds.map((round) => (
               <div key={round.roundNumber} className="mb-8 last:mb-0">
                 <h3 className="text-xl font-semibold mb-4 text-gray-600">
                   회차 {round.roundNumber}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {round.matches.map((match) => (
                     <div
                       key={match.id}
@@ -223,8 +275,11 @@ export default function Home() {
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="font-semibold text-gray-700 mb-2">
                             팀 1
+                            <span className="text-sm text-gray-600 mt-1">
+                              - (평균 레벨: {match.team1.averageLevel})
+                            </span>
                           </p>
-                          <p className="text-sm">
+                          <p className="text-sm text-black">
                             <span
                               className={
                                 match.team1.player1.gender === "male"
@@ -245,15 +300,15 @@ export default function Home() {
                               {match.team1.player2.name}
                             </span>
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            평균 레벨: {match.team1.averageLevel}
-                          </p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="font-semibold text-gray-700 mb-2">
                             팀 2
+                            <span className="text-sm text-gray-600 mt-1">
+                              - (평균 레벨: {match.team2.averageLevel})
+                            </span>
                           </p>
-                          <p className="text-sm">
+                          <p className="text-sm text-black">
                             <span
                               className={
                                 match.team2.player1.gender === "male"
@@ -273,9 +328,6 @@ export default function Home() {
                             >
                               {match.team2.player2.name}
                             </span>
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            평균 레벨: {match.team2.averageLevel}
                           </p>
                         </div>
                       </div>
