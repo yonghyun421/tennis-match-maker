@@ -6,6 +6,7 @@ export interface Player {
   name: string;
   level: number; // 1-5
   gender: Gender;
+  group: "terizz" | "tenipang"; // 그룹 속성 다시 추가
   matchesPlayed: number; // 플레이어가 참여한 매치 수
 }
 
